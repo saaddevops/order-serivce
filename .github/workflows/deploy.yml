@@ -4,6 +4,12 @@ on:
   push:
     branches: [ "main" ]
 
+env:
+  AWS_REGION: ap-south-1
+  ECR_REGISTRY: 318630425608.dkr.ecr.ap-south-1.amazonaws.com
+  ECR_REPOSITORY: order-service
+  IMAGE_TAG: latest
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,20 +23,21 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ap-south-1
+        aws-region: ${{ env.AWS_REGION }}
 
     - name: Login to ECR
       run: |
-        aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin <YOUR_ECR_URL>
+        aws ecr get-login-password --region $AWS_REGION | \
+        docker login --username AWS --password-stdin $ECR_REGISTRY
 
     - name: Build image
       run: |
-        docker build -t order-service .
+        docker build -t $ECR_REPOSITORY .
 
     - name: Tag image
       run: |
-        docker tag order-service:latest 318630425608.dkr.ecr.ap-south-1.amazonaws.com/order-service:latest
+        docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
     - name: Push image
       run: |
-        docker push 318630425608.dkr.ecr.ap-south-1.amazonaws.com/order-service:latest
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
